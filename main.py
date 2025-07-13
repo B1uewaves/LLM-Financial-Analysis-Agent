@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()  # reads .env into environment variables
+
 # Streamlit UI entry point
 import streamlit as st
 
