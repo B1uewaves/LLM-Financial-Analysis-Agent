@@ -1,0 +1,9 @@
+openai
+yfinance
+prophet
+streamlit
+langchain
+python-dotenv
+scikit-learn
+plotly
+matplotlib
