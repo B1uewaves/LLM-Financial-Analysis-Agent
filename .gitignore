@@ -1,0 +1,19 @@
+# Virtual environments
+.venv/
+env/
+venv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local env file
+.env
+
+# Streamlit temp files (if any)
+.streamlit/
+
+# IDE files (optional)
+.vscode/
+.idea/
