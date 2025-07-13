@@ -1,8 +1,0 @@
-streamlit
-langchain
-openai
-yfinance
-python-dotenv
-pandas
-scikit-learn
-prophet
