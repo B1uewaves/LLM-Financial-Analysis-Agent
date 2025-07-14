@@ -1,0 +1,1 @@
+# Wraps the OpenAI ChatCompletion API; feeds it your summary prompt (from prompts/templates.py) plus raw data, returns a human‑friendly summary
