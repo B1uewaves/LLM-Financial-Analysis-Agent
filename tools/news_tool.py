@@ -9,7 +9,7 @@ load_dotenv()  # read NEWSAPI_KEY from .env
 API_KEY = os.getenv("NEWSAPI_KEY")
 BASE_URL = "https://newsapi.org/v2/everything"
 
-def fetch_headlines(ticker: str, max_results: int = 5) -> list[str]:
+def fetch_headlines(ticker: str, max_results: int = 5) -> str:
     """
     Return the top `max_results` recent headlines mentioning the ticker.
     """
@@ -29,14 +29,13 @@ def fetch_headlines(ticker: str, max_results: int = 5) -> list[str]:
     # Fallback if API limit or error
     articles = data.get("articles", [])
     # extract & filter titles
-    titles = []
+    titles: list[str] = []
     for a in articles:
         title = a.get("title", "").strip()
-        # skip non-English leftovers or too‑long titles
         if not title or len(title) > 120:
             continue
         titles.append(title)
         if len(titles) >= max_results:
             break
 
-    return titles
+    return "\n".join(titles)
