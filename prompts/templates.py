@@ -6,23 +6,45 @@ from langchain import PromptTemplate
 
 # 1. Summarize raw stock + news data
 SUMMARY_TEMPLATE = PromptTemplate(
-    input_variables=["ticker", "price_data", "headlines"],
+    input_variables=[
+        "ticker",
+        "current_price",
+        "pct_change",
+        "trend_30d",
+        "volume",
+        "bid_ask",
+        "day_range",
+        "market_cap",
+        "pe_ratio",
+        "headlines"
+    ],
     template="""
-You are a financial analyst.
-Given the following information for {ticker}:
+You are an equity research analyst preparing a 2‑minute morning briefing.  
+Produce a concise, bullet‑point summary on {ticker}, covering:
 
-• Recent price history (last 30 days):  
-{price_data}
+1. **Price & Movement**  
+   • Current Price: {current_price} ({pct_change})  
+   • 30‑Day Trend: {trend_30d}
 
-• Top 5 news headlines:  
-{headlines}
+2. **Trading Activity & Liquidity**  
+   • Volume: {volume}  
+   • Bid/Ask: {bid_ask}  
+   • Day’s Range: {day_range}
 
-Write a concise summary (≤ 100 words) covering:
-- Key price trend  
-- Most important news  
-- Overall outlook
+3. **Valuation & Market Cap**  
+   • Market Cap: {market_cap}  
+   • P/E Ratio: {pe_ratio}
 
-Use bullet points.
+4. **Recent Drivers**  
+   {headlines}
+
+5. **Risks & Sentiment**  
+   Briefly note one key risk and overall market sentiment.
+
+6. **Outlook**  
+   One‑sentence bull case and one‑sentence bear case.
+
+Write in formal, sell‑side tone. Limit to ~150 words in total.
 """.strip()
 )
 
