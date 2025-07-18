@@ -34,7 +34,7 @@ def fetch_headlines(ticker: str, max_results: int = 5) -> str:
         title = a.get("title", "").strip()
         if not title or len(title) > 120:
             continue
-        titles.append(title)
+        titles.append(f"• {title}")
         if len(titles) >= max_results:
             break
 
