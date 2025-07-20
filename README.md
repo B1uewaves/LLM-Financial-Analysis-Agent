@@ -2,6 +2,10 @@
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\.venv\Scripts\Activate.ps1
 
+streamlit run main.py
+
+python -m tools.summary_tool 
+
 # LangChain Stock & News Agent
 
 ## Overview

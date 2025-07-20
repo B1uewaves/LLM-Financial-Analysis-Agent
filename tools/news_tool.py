@@ -6,8 +6,8 @@ from dotenv import load_dotenv
 
 load_dotenv()  # read NEWSAPI_KEY from .env
 
-API_KEY = os.getenv("NEWSAPI_KEY")
-BASE_URL = "https://newsapi.org/v2/everything"
+API_KEY = os.getenv("NEWS_API_KEY")
+BASE_URL = os.getenv("NEWS_API_BASE")
 
 def fetch_headlines(ticker: str, max_results: int = 5) -> str:
     """
@@ -38,4 +38,4 @@ def fetch_headlines(ticker: str, max_results: int = 5) -> str:
         if len(titles) >= max_results:
             break
 
-    return "\n".join(titles)
+    return titles
