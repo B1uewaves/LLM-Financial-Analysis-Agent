@@ -1,4 +1,6 @@
-# Grabs live price, company name, and 30‑day history via yfinance.
+# Fetches live stock data (price, 30‑day history, key metrics) via yfinance.
+# Implements simple in‑memory caching to reduce redundant API calls.
+# Returns raw Python dicts for downstream LLM consumption.
 
 import yfinance as yf
 from typing import Optional

@@ -1,8 +1,12 @@
-# Houses your prompt engineering:
-
-# prompts/templates.py
-
+from dataclasses import dataclass
 from langchain_core.prompts import PromptTemplate
+
+@dataclass
+class VersionedPrompt:
+    version: str
+    description: str
+    template: PromptTemplate
+    few_shot_examples: list = None
 
 # 1. Summarize raw stock + news data
 SUMMARY_TEMPLATE = PromptTemplate(
@@ -58,39 +62,5 @@ Use markdown format for output.
 • **Bear Case:** Point to a plausible downside risk to revenue, margins, or valuation.
 
 Return only the formatted briefing in markdown.
-""".strip()
-)
-
-# 2. Compare two tickers side‑by‑side
-COMPARISON_TEMPLATE = PromptTemplate(
-    input_variables=["ticker_a", "data_a", "ticker_b", "data_b"],
-    template="""
-You are an expert investor advisor.
-Compare {ticker_a} vs. {ticker_b} based on:
-
-{ticker_a} data:  
-{data_a}
-
-{ticker_b} data:  
-{data_b}
-
-Provide:
-1. A short (≤ 50 words) summary of each.  
-2. Three bullet‑pointed differences.  
-3. A one‑sentence recommendation.
-""".strip()
-)
-
-# 3. Narrative “forecast” for next‑day trend
-FORECAST_TEMPLATE = PromptTemplate(
-    input_variables=["ticker", "recent_trends"],
-    template="""
-You are the market’s oracle.  
-Given the recent trends for {ticker}:
-
-{recent_trends}
-
-Write a brief, narrative forecast of tomorrow’s likely price movement.  
-Include one key factor driving the prediction and a disclaimer.
 """.strip()
 )

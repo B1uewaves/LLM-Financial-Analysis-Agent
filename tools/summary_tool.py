@@ -1,7 +1,10 @@
-# Wraps the OpenAI ChatCompletion API; feeds it your summary prompt (from prompts/templates.py) plus raw data, returns a human‑friendly summary
+# Wraps OpenAI’s ChatCompletion to generate concise summaries.
+# Loads and applies your prompt templates
+# Returns human‑readable text or bullet‑list summaries of input data.
+
 from dotenv import load_dotenv
 import os
-from prompts.templates import SUMMARY_TEMPLATE
+from prompts.summary_template import SUMMARY_TEMPLATE
 from openai import RateLimitError, OpenAI
 from datetime import datetime
 

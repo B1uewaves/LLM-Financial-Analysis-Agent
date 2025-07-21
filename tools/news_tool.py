@@ -1,4 +1,6 @@
-# Pulls the latest headlines via NewsAPI (or another news source)
+# Retrieves the latest headlines for a given ticker (e.g. via NewsAPI).
+# Normalizes, deduplicates, and truncates results.
+# Exposes fetch_headlines(ticker: str) → List[str].
 
 import os
 import requests

@@ -1,4 +1,6 @@
-# tools/ingest_tool.py
+# Drives batch ingestion of new documents (e.g. headlines) into your vector store.
+# Coordinates fetching, embedding, and FAISS index rebuilding.
+
 from typing import Tuple, List
 import pickle
 from tools.news_tool import fetch_headlines
