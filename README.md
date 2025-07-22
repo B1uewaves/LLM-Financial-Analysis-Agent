@@ -42,27 +42,50 @@ project/
 4. `pip install -r requirements.txt`
 5. `streamlit run main.py`
 
-## Day 1 Goals
-- Scaffold repo & folders
-- Init virtualenv & install deps
-- Write README outline
++-------------------+
+|    main.py        |  <-- Streamlit UI, entry point
++-------------------+
+          |
+          v
++-------------------+         +-------------------+
+| stock_tool.py     |         | news_tool.py      |
+| fetch_stock_data  |         | fetch_headlines   |
++-------------------+         +-------------------+
+          |                           |
+          +-----------+---------------+
+                      |
+                      v
+             +-------------------+
+             | ingest_tool.py    |  <-- Ingests headlines, builds vector index
+             | ingest_headlines  |
+             +-------------------+
+                      |
+                      v
+             +-------------------+
+             | retrieval_tool.py |  <-- Builds/queries FAISS vector store
+             | init_vector_store |
+             | retrieve          |
+             +-------------------+
+                      |
+                      v
+             +-------------------+
+             | vector_store.py   |  <-- Loads/saves FAISS index
+             | load_vector_store |
+             +-------------------+
+                      |
+                      v
+             +-------------------+
+             | vector_index/     |  <-- Persisted vector data
+             +-------------------+
 
-## agentic Ai(plan, execute, report, finish)
-Build stock_tool.py with a get_stock_info(ticker) function
-Return from get_stock_info: company name, current price, historical price chart, and key metrics
-Test get_stock_info in the console using a dummy ticker
-
-## 
-Your finance‑analysis agent is a lightweight, LLM‑driven assistant that lets you ask plain‑English questions about any stock ticker and get back:
-
-Real‑time data: pulls current price, company name, and 30‑day history via yfinance.
-
-News context: fetches the latest headlines from NewsAPI.
-
-Smart summaries: uses an LLM (via LangChain) to turn raw prices and headlines into concise, easy‑to‑read insights.
-
-Natural comparisons: compares two tickers side‑by‑side on performance, news sentiment, and key metrics.
-
-Narrative “forecasts”: prompts the LLM to produce short‑term trend predictions in prose, complete with caveats.
-
-All the “smarts” live in a LangChain agent that decides which data‑fetch tool to call, in what order, and how to compose the final answer—so you get a conversational, AI‑powered finance helper without writing heavy ML code.
+          |
+          v
++-------------------+
+| summary_tool.py   |  <-- LLM summary, uses OpenAI
+| summarize         |
++-------------------+
+          ^
+          |
++-------------------+
+| prompts/          |  <-- Prompt templates (YAML, .py)
++-------------------+
