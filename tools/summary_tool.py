@@ -2,21 +2,27 @@
 # Loads and applies your prompt templates
 # Returns human‑readable text or bullet‑list summaries of input data.
 
+# tools/summary_tool.py
+# tools/summary_tool.py
 from dotenv import load_dotenv
 import os
-from prompts.summary_template import SUMMARY_TEMPLATE
-from openai import RateLimitError, OpenAI
+from openai import OpenAI, RateLimitError
 from datetime import datetime
 
+from prompts.templates import PROMPTS
 
-# load API key
+# Load environment variables
 load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY")
-api_base = os.getenv("OPENAI_API_BASE")
 
-client = OpenAI(api_key=api_key, base_url=api_base)
+# Instantiate OpenAI client (reads API key from OPENAI_API_KEY and base URL from OPENAI_API_BASE)
+client = OpenAI(
+    api_key=os.getenv("OPENAI_API_KEY"),
+    base_url=os.getenv("OPENAI_API_BASE")
+)
 
-today = datetime.today().strftime("%B %d, %Y")
+# Default date string
+DEFAULT_TODAY = datetime.today().strftime("%B %d, %Y")
+
 
 def summarize(
     ticker: str,
@@ -29,58 +35,54 @@ def summarize(
     market_cap: str,
     pe_ratio: str,
     headlines: list[str],
-    model: str = "gpt-4o-mini",
-    today: str = today
-    ) -> str:
+    today: str = DEFAULT_TODAY,
+    model: str = "gpt-4o-mini"
+) -> str:
+    # 1. Build the system prompt once from your template (includes examples + task)
+    system_prompt = PROMPTS["summary_template"]["prompt"].template
 
-    """
-    Produce a FT‑style morning briefing for a single ticker.
-    All inputs should be formatted strings, e.g.:
-      pct_change="+1.2%", trend_30d="up 5.4%", headlines="- …\n- …", etc.
-    """
-
+    # 2. Build a compact user prompt with only the new data
     headlines_text = "\n".join(f"- {h}" for h in headlines)
-
-    # 2) Fill template
-    prompt = SUMMARY_TEMPLATE.format(
-        today=today,
-        ticker=ticker,
-        current_price=f"${current_price:.2f}",
-        pct_change=pct_change,
-        trend_30d=trend_30d,
-        volume=volume,
-        bid_ask=bid_ask,
-        day_range=day_range,
-        market_cap=market_cap,
-        pe_ratio=pe_ratio,
-        headlines=headlines_text
+    user_prompt = (
+        f"ticker: {ticker}\n"
+        f"today: {today}\n"
+        f"current_price: ${current_price:.2f}\n"
+        f"pct_change: {pct_change}\n"
+        f"trend_30d: {trend_30d}\n"
+        f"volume: {volume}\n"
+        f"bid_ask: {bid_ask}\n"
+        f"day_range: {day_range}\n"
+        f"market_cap: {market_cap}\n"
+        f"pe_ratio: {pe_ratio}\n"
+        f"headlines:\n{headlines_text}\n"
     )
 
-    # 3) Call the API
     try:
-        resp = client.chat.completions.create(
+        response = client.chat.completions.create(
             model=model,
             messages=[
-                {"role": "system", "content": "You are a helpful equity research assistant."},
-                {"role": "user",   "content": prompt}
+                {"role": "system", "content": system_prompt},
+                {"role": "user",   "content": user_prompt}
             ],
             temperature=0.0,
             max_tokens=640,
         )
-        raw = resp.choices[0].message.content or ""
-        return raw.strip()
+        return response.choices[0].message.content.strip()
 
     except RateLimitError:
-        return "⚠️ OpenAI quota reached—unable to generate briefing right now/ Invalid API Key."
+        return "⚠️ OpenAI rate limit reached or invalid API key. Please try again later."
 
-# 4) Quick REPL test
+
+
+# Quick REPL test
 if __name__ == "__main__":
     example_headlines = [
         "Apple reports record iPhone sales in Q2",
         "Analysts upgrade Apple to ‘buy’ at MajorBank",
         "Services revenue hits all‑time high"
     ]
-    print(summarize(
+    # Example usage with default today
+    briefing = summarize(
         ticker="AAPL",
         current_price=210.00,
         pct_change="+1.15%",
@@ -91,4 +93,5 @@ if __name__ == "__main__":
         market_cap="$3.3T",
         pe_ratio="27.8×",
         headlines=example_headlines
-    ))
+    )
+    print(briefing)

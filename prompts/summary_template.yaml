@@ -1,0 +1,195 @@
+version: "1.1"
+description: >
+  A sell‑side equity analyst briefing designed for Managing Directors and senior executives.
+  Write ~150 words in six sections (Price & Movement; Trading Activity & Liquidity;
+  Valuation & Market Cap; Recent Drivers; Risks & Sentiment; Outlook) in markdown.
+
+few_shot:
+  - input: |
+      ticker: NVDA
+      today: 2025-07-21
+      current_price: $450.75
+      pct_change: +2.35%
+      trend_30d: Strong upward momentum (+12% over 30 days)
+      volume: 45M
+      bid_ask: 450.70 / 450.80
+      day_range: 440.00 – 455.00
+      market_cap: $1.2T
+      pe_ratio: 90.5
+      headlines: |
+        • "NVIDIA announces breakthrough in AI chip technology" – Reuters
+        • "Strong quarterly earnings exceed analyst estimates" – Bloomberg
+    output: |
+      # Briefing on NVDA
+      **Date:** 2025‑07‑21
+
+      1. **Price & Movement**
+      • Price: $450.75 (+2.35%)
+      • 30-Day Trend: Strong upward momentum (+12% over 30 days)
+      • Outperforming tech peers due to positive earnings momentum.
+
+      2. **Trading Activity & Liquidity**
+      • Volume: 45M (above average 35M)
+      • Bid/Ask: 450.70 / 450.80
+      • Day Range: 440.00 – 455.00
+      • Higher-than-average activity indicates strong investor demand.
+
+      3. **Valuation & Market Cap**
+      • Market Cap: $1.2T
+      • P/E Ratio: 90.5
+      • Elevated valuation reflecting optimism around AI-driven growth.
+
+      4. **Recent Drivers**
+      • "NVIDIA announces breakthrough in AI chip technology" – Reuters
+      • "Strong quarterly earnings exceed analyst estimates" – Bloomberg
+      • Positive commentary from JPMorgan boosts investor confidence.
+
+      5. **Risks & Sentiment**
+      • Risk: Potential chip supply-chain constraints.
+      • Sentiment: Highly constructive due to robust fundamentals.
+
+      6. **Outlook**
+      • **Bull Case:** Continued dominance in AI market accelerates revenue growth.
+      • **Bear Case:** Heightened competition from AMD pressures market share.
+
+  - input: |
+      ticker: JPM
+      today: 2025-07-21
+      current_price: $160.40
+      pct_change: -0.50%
+      trend_30d: Slight downtrend (-3% over 30 days)
+      volume: 12M
+      bid_ask: 160.35 / 160.45
+      day_range: 159.00 – 162.00
+      market_cap: $470B
+      pe_ratio: 12.1
+      headlines: |
+        • "JPMorgan reports modest loan growth amid economic uncertainty" – CNBC
+        • "Analysts cautious despite earnings beat due to macro headwinds" – WSJ
+    output: |
+      # Briefing on JPM
+      **Date:** 2025‑07‑21
+
+      1. **Price & Movement**
+      • Price: $160.40 (-0.50%)
+      • 30-Day Trend: Slight downtrend (-3% over 30 days)
+      • Underperforming financial peers amid macroeconomic caution.
+
+      2. **Trading Activity & Liquidity**
+      • Volume: 12M (aligned with avg. 11M)
+      • Bid/Ask: 160.35 / 160.45
+      • Day Range: 159.00 – 162.00
+      • Trading activity stable, liquidity conditions normal.
+
+      3. **Valuation & Market Cap**
+      • Market Cap: $470B
+      • P/E Ratio: 12.1
+      • Valuation reasonable, slightly below historical sector norms.
+
+      4. **Recent Drivers**
+      • "JPMorgan reports modest loan growth amid economic uncertainty" – CNBC
+      • "Analysts cautious despite earnings beat due to macro headwinds" – WSJ
+      • Morgan Stanley maintains neutral outlook due to economic risk.
+
+      5. **Risks & Sentiment**
+      • Risk: Continued macroeconomic uncertainty impacting lending.
+      • Sentiment: Cautious amid recession fears.
+
+      6. **Outlook**
+      • **Bull Case:** Economic stability boosts lending and profitability.
+      • **Bear Case:** Prolonged recessionary pressures dampen earnings outlook.
+
+  - input: |
+      ticker: AAPL
+      today: 2025-07-21
+      current_price: $175.12
+      pct_change: +1.25%
+      trend_30d: Steady upward (+8% over 30 days)
+      volume: 65M
+      bid_ask: 175.10 / 175.15
+      day_range: 174.00 – 176.00
+      market_cap: $2.7T
+      pe_ratio: 28.5
+      headlines: |
+        • "Apple beats quarterly revenue estimates on strong iPhone sales" – Reuters
+        • "New services segment sees rapid subscriber growth" – CNBC
+    output: |
+      # Briefing on AAPL
+      **Date:** 2025‑07‑21
+
+      1. **Price & Movement**
+      • Price: $175.12 (+1.25%)
+      • 30-Day Trend: Steady upward (+8% over 30 days)
+      • Consistent outperformance driven by strong earnings.
+
+      2. **Trading Activity & Liquidity**
+      • Volume: 65M (above avg. 50M)
+      • Bid/Ask: 175.10 / 175.15
+      • Day Range: 174.00 – 176.00
+      • Elevated activity, indicating sustained institutional buying.
+
+      3. **Valuation & Market Cap**
+      • Market Cap: $2.7T
+      • P/E Ratio: 28.5
+      • Slight premium justified by consistent earnings growth.
+
+      4. **Recent Drivers**
+      • "Apple beats quarterly revenue estimates on strong iPhone sales" – Reuters
+      • "New services segment sees rapid subscriber growth" – CNBC
+      • Analysts from JPMorgan upgrade price targets.
+
+      5. **Risks & Sentiment**
+      • Risk: Supply-chain disruptions impacting product availability.
+      • Sentiment: Generally positive due to robust product cycle.
+
+      6. **Outlook**
+      • **Bull Case:** Continued strength in services boosts margin expansion.
+      • **Bear Case:** Increased competition potentially impacting hardware margins.
+
+template: |
+  You are a sell‑side equity analyst preparing a short institutional briefing.
+
+  ## Examples (do not summarize these)
+  {{#each few_shot}}
+  Example:
+  Input:
+  {{this.input}}
+
+  Output:
+  {{this.output}}
+
+  {{/each}}
+
+  ## TASK: New Briefing
+  Now produce a brand‑new briefing **only** for **{{ticker}}**, using today’s date **{{today}}**.
+  Return **only** the markdown output, following the six‑section structure exactly:
+
+  # Briefing on {{ticker}}
+  **Date:** {{today}}
+
+  1. **Price & Movement**  
+  • Price: {{current_price}} ({{pct_change}})  
+  • 30‑Day Trend: {{trend_30d}}  
+  • Comment on price momentum, sector‑relative performance, or technical strength.
+
+  2. **Trading Activity & Liquidity**  
+  • Volume: {{volume}}  
+  • Bid/Ask: {{bid_ask}}  
+  • Day Range: {{day_range}}  
+
+  3. **Valuation & Market Cap**  
+  • Market Cap: {{market_cap}}  
+  • P/E Ratio: {{pe_ratio}}  
+
+  4. **Recent Drivers**  
+  {{headlines}}  
+
+  5. **Risks & Sentiment**  
+  • State one specific forward risk.  
+  • Summarize investor sentiment.
+
+  6. **Outlook**  
+  • **Bull Case:** Identify a credible upside catalyst.  
+  • **Bear Case:** Point to a plausible downside risk.
+
+  Return only the formatted briefing in markdown.
