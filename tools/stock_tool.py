@@ -28,13 +28,32 @@ def fetch_stock_data(ticker: str) -> dict:
       - market_cap
       - P/E ratio
       - 30‑day closing history
+    Returns {"error": "..."} on failure.
     """
-    tkr = yf.Ticker(ticker)
-    info = tkr.info
+
+    ticker = ticker.strip().upper()
+
+    try:
+        tkr = yf.Ticker(ticker)
+        info = tkr.info
+    except Exception as e:
+        return {"error": f"Failed to fetch data for '{ticker}': {e}"}
+
+    # Now fetch history
+    try:
+        hist = tkr.history(period="31d")
+    except Exception as e:
+        return {"error": f"Failed to fetch history for '{ticker}': {e}"}
+
+    # No data?
+    if hist.empty or "Close" not in hist:
+        return {"error": f"No price data found for '{ticker}'."}
 
     # Get history for 31 days so we can compute a 30d trend
-    hist = tkr.history(period="31d")
     closes = hist["Close"].tolist()
+    if len(closes) < 2:
+        return {"ticker": ticker, "error": f"Not enough closing prices for '{ticker}'."}
+
     history_30d = closes[-30:]
     price_30d_ago = closes[0] if len(closes) >= 30 else closes[0]
 
