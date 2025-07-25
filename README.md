@@ -89,3 +89,20 @@ project/
 +-------------------+
 | prompts/          |  <-- Prompt templates (YAML, .py)
 +-------------------+
+
+
+Browser Tab
+  |
+  |-- st.session_state["session_id"] = "session-123"
+  |-- st.session_state["agent"] = build_agent(memory)
+  |
+Streamlit Server (main.py reruns on input)
+  |
+  |-- get_memory("session-123") → RedisChatMessageHistory
+  |
+  |-- agent.run("What changed since last time?")
+  |
+Redis
+  |
+  |-- Key: "session-123"
+  |-- Value: [ {user: "Show TSLA"}, {AI: "TSLA is up 5%..."} ]
