@@ -1,34 +1,51 @@
-# Drives batch ingestion of new documents (e.g. headlines) into your vector store.
-# Coordinates fetching, embedding, and FAISS index rebuilding.
-
 from typing import Tuple, List
-import pickle
-from tools.news_tool import fetch_headlines
-from tools.retrieval_tool import init_vector_store
-
-# directory where FAISS will persist its index + docstore
-PERSIST_DIR = "vector_index"
+from tools.headline_utils import fetch_headlines_raw
+from tools.retrieval_tool import init_vector_store, merge_vector_stores
+from tools.vector_store import load_vector_store, save_vector_store
 
 def ingest_headlines_for_ticker(
     ticker: str,
-    max_results: int = 20,
+    max_results: int = 100,
     persist: bool = True
 ) -> None:
     """
-    1. Fetch recent headlines for a ticker
-    2. Turn them into (doc_id, text) pairs
-    3. Initialize or update FAISS index
-    4. Optionally persist index + metadata to disk
+    Ingest and vectorize news headlines for a specific ticker.
+    Saves the index under vector_index/{ticker}/
     """
-    headlines = fetch_headlines(ticker, max_results=max_results)
-    # create simple unique IDs
-    docs: List[Tuple[str, str]] = [
-        (f"{ticker.lower()}_{i}", text)
-        for i, text in enumerate(headlines)
-    ]
+    headlines = fetch_headlines_raw(ticker, max_results=max_results)
 
-    # build the vector store and persist it into a directory    
-    vector_store = init_vector_store(docs)
+    docs = []
+    for i, article in enumerate(headlines):
+        title = article.get("title", "").strip()
+        if not title:
+            continue
+
+        doc = {
+            "id": f"{ticker.lower()}_{i}",
+            "title": (article.get("title") or "").strip(),
+            "description": (article.get("description") or "").strip(),
+            "url": (article.get("url") or "").strip(),
+            "published_at": (article.get("published_at") or "").strip()
+        }
+        docs.append(doc)
+
+    if not docs:
+        print(f"[ingest] No headlines found for {ticker.upper()}")
+        return
+
+    new_store = init_vector_store(docs)
+    existing_store = load_vector_store(namespace=ticker)
+
+    combined_store = merge_vector_stores(existing_store, new_store) if existing_store else new_store
+
     if persist:
-        vector_store.save_local(PERSIST_DIR)
-        print(f"[ingest] Indexed {len(docs)} docs for {ticker.upper()} → persisted in `{PERSIST_DIR}/`")
+        save_vector_store(combined_store, namespace=ticker)
+        print(f"[ingest] Indexed {len(docs)} headlines for {ticker.upper()} → vector_index/{ticker}/")
+
+if __name__ == "__main__":
+    # Example: test ingesting Apple headlines
+    from sys import argv
+
+    ticker = argv[1] if len(argv) > 1 else "AAPL"
+    print(f"[Test] Ingesting headlines for {ticker}...")
+    ingest_headlines_for_ticker(ticker)

@@ -1,7 +1,8 @@
 from langchain.memory.chat_message_histories import RedisChatMessageHistory
 from langchain.memory import ConversationBufferMemory
+import os
 
-def get_memory(session_id: str = "default-session", redis_url: str = "redis://localhost:6379"):
+def get_memory(session_id: str = "default-session", redis_url: str = "redis://redis:6379"):
     """
     Initializes a Redis-backed conversation memory.
 
@@ -12,14 +13,14 @@ def get_memory(session_id: str = "default-session", redis_url: str = "redis://lo
     Returns:
         ConversationBufferMemory: Configured memory object.
     """
-    message_hostory = RedisChatMessageHistory(
+    redis_url = redis_url or os.getenv("REDIS_URL", "redis://redis:6379")
+    message_history = RedisChatMessageHistory(
         session_id = session_id,
         url = redis_url
     )
 
-    memory = ConversationBufferMemory(
-        chat_memory = message_history,
-        return_messages = True
-    )
 
-    return memory
+    return ConversationBufferMemory(
+        chat_memory=message_history,
+        return_messages=True
+    )

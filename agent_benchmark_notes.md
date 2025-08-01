@@ -11,12 +11,12 @@
 
 ### 1. React Agent
 - **Type:** `ZERO_SHOT_REACT_DESCRIPTION`
-- **LLM:** GPT-4 via `ChatOpenAI`
+- **LLM:** gpt-4.1-nano via `ChatOpenAI`
 - **Tools Used:** StockDataFetcher, ContextRetriever, Summarizer
 
 ### 2. Plan-and-Execute Agent
 - **Type:** `OPENAI_FUNCTIONS`
-- **LLM:** GPT-4 via `ChatOpenAI`
+- **LLM:** gpt-4.1-nano via `ChatOpenAI`
 - **Tools Used:** StockDataFetcher, ContextRetriever, Summarizer
 
 ---
@@ -25,10 +25,9 @@
 
 | Query ID | Prompt |
 |----------|--------|
-| Q1 | "Summarize recent performance and headlines for ticker AAPL." |
-| Q2 | "Compare MSFT and GOOGL in terms of recent stock performance and major news." |
-| Q3 | "What happened to TSLA this week? Summarize the context and any unusual events." |
-| Q4 | "Summarize headlines for FAKE123 and compare to AAPL." _(Edge case: invalid ticker)_ |
+| Q1 | "Summarize recent performance for ticker AAPL." |
+| Q2 | "Compare MSFT and AAPL in terms of recent stock performance and major news." |
+| Q3 | "Fetch news about Apple's AI strategy" |
 
 ---
 

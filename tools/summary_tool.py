@@ -1,56 +1,84 @@
-# Wraps OpenAI’s ChatCompletion to generate concise summaries.
-# Loads and applies your prompt templates
-# Returns human‑readable text or bullet‑list summaries of input data.
-
 # tools/summary_tool.py
-from dotenv import load_dotenv
 import os
-from openai import OpenAI, RateLimitError
+from dotenv import load_dotenv
 from datetime import datetime
 from typing import Dict, List
+
+from openai import OpenAI, RateLimitError
+from tools.vector_store import load_vector_store
+from tools.resolve_tool import resolve_company_name
+from tools.retrieval_tool import retrieve
 from prompts.templates import PROMPTS
+from tools.news_tool import extract_keywords_from_query, contains_all_keywords
 
 # Load environment variables
 load_dotenv()
 
-# Instantiate OpenAI client (reads API key from OPENAI_API_KEY and base URL from OPENAI_API_BASE)
 client = OpenAI(
     api_key=os.getenv("OPENAI_API_KEY"),
     base_url=os.getenv("OPENAI_API_BASE")
 )
 
-# Default date string
 DEFAULT_TODAY = datetime.today().strftime("%B %d, %Y")
+
+def get_relevant_headlines(ticker: str, query: str = "", k: int = 5) -> List[str]:
+    store = load_vector_store(ticker)
+    if not store:
+        return ["(No vector index found — please run ingestion first.)"]
+
+    # ✅ Always resolve company name
+    resolved = resolve_company_name(ticker)
+
+    # ✅ Improve default query if needed
+    query = query.strip()
+    if not query or query.lower() in {"", "company", "news", "company news", ticker.lower()}:
+        print(f"[Fallback] No clear query. Using resolved name: {resolved}")
+        query = resolved
+
+    # ✅ Keyword extraction from enhanced query
+    keyword_info = extract_keywords_from_query(query, ticker=ticker)
+    primary_keywords = keyword_info.get("primary_keywords", []) or [resolved]
+    secondary_query = " ".join(keyword_info.get("secondary_keywords", [])) or query
+
+    # ✅ Search vector store
+    results = retrieve(store, query=secondary_query, k=k * 2)
+    headlines = []
+
+    for doc, score in results:
+        title = doc.page_content
+        url = doc.metadata.get("url", "")
+        published = doc.metadata.get("published_at", "")
+        description = doc.metadata.get("description", "")
+        combined_text = f"{title} {description}"
+
+        if not contains_all_keywords(combined_text, primary_keywords):
+            continue
+
+        line = f"{title} ({published})\n{url}" if url else title
+        headlines.append(line)
+
+        if len(headlines) >= k:
+            break
+
+    return headlines if headlines else ["(No relevant headlines found.)"]
 
 
 def summarize_stock(
     data: dict,
-    headlines: list[str],
+    query: str = "",
     today: str = DEFAULT_TODAY,
-    model: str = "gpt-4o-mini"
+    model: str = "gpt-4.1-nano"
 ) -> str:
     """
-    data: {
-      'ticker': str,
-      'name': str,
-      'current_price': float or str,
-      'pct_change': str,
-      'trend_30d': str,
-      'volume': str,
-      'bid_ask': str,
-      'day_range': str,
-      'market_cap': str,
-      'pe_ratio': str
-    }
-    headlines: list of latest news headlines
+    Summarize the stock data and retrieve headlines using FAISS based on filter_type.
     """
-    # 1. Load system prompt from templates
+    headlines = get_relevant_headlines(data["ticker"], query)
+
+    # 1. Load prompt
     system_prompt = PROMPTS["summary_template"]["prompt"].template
 
-    # 2. Format headlines
+    # 2. Format input
     headlines_text = "\n".join(f"- {h}" for h in headlines)
-
-    # 3. Build user prompt with data fields
     user_prompt = (
         f"ticker: {data.get('ticker')} ({data.get('name')})\n"
         f"date: {today}\n"
@@ -65,13 +93,13 @@ def summarize_stock(
         f"headlines:\n{headlines_text}\n"
     )
 
-    # 4. Call OpenAI chat completion
+    # 3. LLM call
     try:
         response = client.chat.completions.create(
             model=model,
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user",   "content": user_prompt}
+                {"role": "user", "content": user_prompt}
             ],
             temperature=0.0,
             max_tokens=640,
@@ -79,61 +107,22 @@ def summarize_stock(
         return response.choices[0].message.content.strip()
 
     except RateLimitError:
-        return (
-            "⚠️ OpenAI rate limit reached or invalid API key. "
-            "Please try again later."
-        )
-
-#Multi summary
-def summarize_stock_multiple(
-    data_items: List[Dict],
-    headline_lists: List[List[str]]
-) -> str:
-    """
-    data_items: [ {ticker, name, current_price, pct_change, …}, … ]
-    headline_lists:  parallel list of lists of strings
-    """
-    # Build a comparison prompt
-
-    prompt_sections = []
-    for d, h in zip(data_items, headline_lists):
-        # Build one section per ticker
-        section = f"""
-    == {d['ticker']} ({d['name']}) ==
-    • Price: ${d['current_price']} ({d['pct_change']:+.2f}%)
-    • 30‑day trend: {d['trend_30d']:+.2f}%
-
-    Headlines:
-    {''.join(f"- {headline}\n" for headline in h)}
-    """
-        prompt_sections.append(section)
-
-
-    prompt = (
-        "You are a financial analyst. Compare the performance of the following tickers:\n"
-        + "\n".join(prompt_sections)
-        + "\nProvide a concise (≤150 words) compare‑and‑contrast focusing on drivers and outlook."
-    )
-
-    resp = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.2,
-        max_tokens=640,
-    )
-    return resp.choices[0].message.content.strip()
+        return "⚠️ OpenAI rate limit or API error."
 
 def summarize_stock_multiple(
     data_items: List[Dict],
-    headline_lists: List[List[str]]
+    query: str = ""
 ) -> str:
-    # 1) Generate individual summaries
+    """
+    Summarizes multiple stocks by retrieving FAISS-based headlines for each and comparing.
+    """
     individual_summaries = []
-    for d, h in zip(data_items, headline_lists):
-        text = summarize_stock(d, h)
-        individual_summaries.append(f"• {d['ticker']}: {text}")
+    for d in data_items:
+        headlines = get_relevant_headlines(d["ticker"], query)
+        summary = summarize_stock(d, query=query)
+        individual_summaries.append(f"• {d['ticker']}: {summary}")
 
-    # 2) Build a compare prompt
+    # Comparison prompt
     prompt = (
         "You are a financial analyst. Here are individual summaries:\n"
         + "\n".join(individual_summaries)
@@ -141,7 +130,6 @@ def summarize_stock_multiple(
           "in a concise (≤150 words) analysis."
     )
 
-    # 3) Call the LLM
     resp = client.chat.completions.create(
         model="gpt-4o",
         messages=[{"role": "user", "content": prompt}],
@@ -150,24 +138,19 @@ def summarize_stock_multiple(
     )
     return resp.choices[0].message.content.strip()
 
-# Quick REPL test
-if __name__ == "__main__":
-    example_headlines = [
-        "Apple reports record iPhone sales in Q2",
-        "Analysts upgrade Apple to ‘buy’ at MajorBank",
-        "Services revenue hits all‑time high"
-    ]
-    # Example usage with default today
-    briefing = summarize_stock(
-        ticker="AAPL",
-        current_price=210.00,
-        pct_change="+1.15%",
-        trend_30d="up 5.4%",
-        volume="48M (avg 37M)",
-        bid_ask="$209.95/$210.05",
-        day_range="$208.50–$211.50",
-        market_cap="$3.3T",
-        pe_ratio="27.8×",
-        headlines=example_headlines
-    )
-    print(briefing)
+# Test
+# if __name__ == "__main__":
+    # summary = summarize_stock({
+    #     "ticker": "AAPL",
+    #     "name": "Apple Inc.",
+    #     "current_price": 210.00,
+    #     "pct_change": "+1.15%",
+    #     "trend_30d": "up 5.4%",
+    #     "volume": "48M (avg 37M)",
+    #     "bid_ask": "$209.95/$210.05",
+    #     "day_range": "$208.50–$211.50",
+    #     "market_cap": "$3.3T",
+    #     "pe_ratio": "27.8×"
+    # }, filter_type="macbook")
+
+    # print(summary)

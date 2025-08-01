@@ -4,6 +4,28 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
 streamlit run main.py
 
+docker-compose down
+docker-compose up --build -d
+
+http://localhost:8501
+
+scp -i llm.pem -r * ubuntu@13.51.206.118:~/llm-agent
+ssh -i llm.pem ubuntu@13.51.206.118
+
+then on ec2: 
+cd ~/llm-agent
+docker compose down        # stop old container
+docker compose up --build  # rebuild with new code
+
+docker system prune -a -f --volumes
+df -h
+
+
+
+
+http://13.51.206.118:8501
+
+
 python -m tools.summary_tool 
 
 # LangChain Stock & News Agent
@@ -89,6 +111,16 @@ project/
 +-------------------+
 | prompts/          |  <-- Prompt templates (YAML, .py)
 +-------------------+
+
+Layer 1: Data Ingestion
+  ↳ ingest_tool.py         → Handles embedding + indexing
+
+Layer 2: Vector Store Manager (ISOLATED HERE) ✅
+  ↳ vector_store.py        → Load, retrieve, save, inspect (generic interface)
+
+Layer 3: Applications
+  ↳ summary_tool.py        → Uses retrieve() + summarize()
+  ↳ headline_tool.py       → Uses retrieve() + prints titles/snippets
 
 
 Browser Tab
